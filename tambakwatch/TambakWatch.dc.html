@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f3f1ea;color:#1d2420;font-family:'Public Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1f5f45}a:hover{color:#133d2c}
+input,select,textarea,button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <header style="position:sticky;top:0;z-index:5;background:#1d2420;color:#f3f1ea;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:12px 28px">
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+      <div style="font-weight:700;font-size:18px;letter-spacing:-0.01em">TambakWatch</div>
+      <div style="font-size:13px;color:#a9b0a6">Brgy. San Isidro · Sat, Oct 10, 2026 · <span style="font-family:'JetBrains Mono',monospace">{{ nowLabel }}</span></div>
+    </div>
+    <div style="display:flex;gap:4px;background:#2c342f;padding:4px;border-radius:8px">
+      <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+        <button onClick="{{ r.pick }}" style="border:0;cursor:pointer;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;background:{{ r.bg }};color:{{ r.fg }}">{{ r.label }}</button>
+      </sc-for>
+    </div>
+  </header>
+
+  <sc-if value="{{ toast }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:#1d2420;color:#f3f1ea;padding:12px 18px;border-radius:8px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-width:90vw">{{ toast }}</div>
+  </sc-if>
+
+  <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+    <main style="padding:28px;display:flex;flex-direction:column;gap:28px;max-width:1320px;width:100%;box-sizing:border-box;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6f66">Admin · Barangay office</div>
+          <h1 style="margin:4px 0 0;font-size:28px;letter-spacing:-0.02em">Overview</h1>
+        </div>
+        <div style="font-size:13px;color:#6b6f66">{{ areaCount }} areas · {{ camCount }} cameras · 3 facilitators</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        <sc-for list="{{ counts }}" as="c" hint-placeholder-count="4">
+          <div style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#4a4f48"><span style="width:10px;height:10px;border-radius:50%;background:{{ c.c }}"></span>{{ c.label }}</div>
+            <div style="font-size:40px;font-weight:700;letter-spacing:-0.03em;line-height:1">{{ c.n }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px">
+        <section style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="padding:14px 18px;border-bottom:1px solid #e7e3d8;display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font-size:15px">Area map</h2><span style="font-size:12px;color:#6b6f66">Click a pin to open its facilitator view</span></div>
+          <div style="position:relative;flex:1;min-height:380px;background-color:#eef0e8;background-image:linear-gradient(#e0e3d9 1px,transparent 1px),linear-gradient(90deg,#e0e3d9 1px,transparent 1px);background-size:40px 40px">
+            <div style="position:absolute;left:0;right:0;top:46%;height:14px;background:#fff;opacity:.9"></div>
+            <div style="position:absolute;top:0;bottom:0;left:52%;width:12px;background:#fff;opacity:.9"></div>
+            <div style="position:absolute;left:4%;top:50%;width:46%;height:22px;background:#cfe0e3;border-radius:12px;transform:rotate(-8deg)"></div>
+            <sc-for list="{{ areas }}" as="a">
+              <button onClick="{{ a.open }}" style="position:absolute;left:{{ a.xp }};top:{{ a.yp }};transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;border:0;background:#fff;padding:5px 9px 5px 6px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.18);cursor:pointer;font-size:12px;font-weight:600;color:#1d2420;white-space:nowrap">
+                <span style="width:12px;height:12px;border-radius:50%;background:{{ a.c }};box-shadow:0 0 0 3px {{ a.bg }}"></span>{{ a.name }}
+              </button>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #e7e3d8"><h2 style="margin:0;font-size:15px">All areas</h2></div>
+          <div style="overflow-x:auto">
+            <div style="min-width:520px">
+              <div style="display:grid;grid-template-columns:1.3fr .9fr 1.3fr .8fr;gap:10px;padding:10px 18px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6f66;border-bottom:1px solid #e7e3d8"><div>Area</div><div>Status</div><div>Facilitator</div><div>Camera</div></div>
+              <sc-for list="{{ areas }}" as="a" hint-placeholder-count="8">
+                <div style="display:grid;grid-template-columns:1.3fr .9fr 1.3fr .8fr;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid #efece4;font-size:14px">
+                  <div><div style="font-weight:600">{{ a.name }}</div><div style="font-size:12px;color:#6b6f66">{{ a.sub }}</div></div>
+                  <div><span style="display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:{{ a.bg }};color:{{ a.c }}">{{ a.label }}</span></div>
+                  <select value="{{ a.facilitatorId }}" onChange="{{ a.assign }}" style="border:1px solid #dcd8cc;border-radius:6px;padding:6px 8px;font-size:13px;background:#fff;color:#1d2420;min-width:0">
+                    <sc-for list="{{ a.facOpts }}" as="f"><option value="{{ f.id }}" selected="{{ f.sel }}">{{ f.name }}</option></sc-for>
+                  </select>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#4a4f48">{{ a.camLabel }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px"><h2 style="margin:0;font-size:18px">Latest camera snapshots</h2><span style="font-size:12px;color:#6b6f66">Use “Simulate detection” to test the alert flow</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">
+          <sc-for list="{{ camAreas }}" as="a" hint-placeholder-count="7">
+            <div style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;overflow:hidden;display:flex;flex-direction:column">
+              <div style="position:relative;aspect-ratio:4/3;background:{{ a.snapBg }}">
+                <div style="position:absolute;top:8px;left:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#e8ece4">{{ a.camId }} · {{ a.detLabel }}</div>
+                <sc-if value="{{ a.isFull }}">
+                  <div style="position:absolute;left:22%;top:34%;width:52%;height:46%;border:2px solid #ff8a4c;border-radius:2px"><span style="position:absolute;top:-20px;left:-2px;background:#ff8a4c;color:#1d2420;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 5px">overflow {{ a.confPct }}</span></div>
+                </sc-if>
+              </div>
+              <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+                <div style="min-width:0"><div style="font-weight:600;font-size:14px">{{ a.name }}</div><div style="font-size:12px;color:{{ a.c }};font-weight:600">{{ a.label }}</div></div>
+                <sc-if value="{{ a.canSim }}"><button onClick="{{ a.simulate }}" style="border:1px solid #dcd8cc;background:#fff;border-radius:6px;padding:6px 8px;font-size:12px;cursor:pointer;color:#1d2420">Simulate detection</button></sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:12px">
+        <h2 style="margin:0;font-size:18px">Reports · last 30 days</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px">
+          <div style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:14px;font-weight:600">Times an area was detected full</div>
+            <sc-for list="{{ fills }}" as="r" hint-placeholder-count="9">
+              <div style="display:grid;grid-template-columns:130px 1fr 28px;gap:10px;align-items:center;font-size:13px">
+                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+                <div style="height:10px;background:#efece4;border-radius:5px;overflow:hidden"><div style="height:100%;width:{{ r.w }};background:#b4441a;border-radius:5px"></div></div>
+                <div style="font-family:'JetBrains Mono',monospace;text-align:right">{{ r.n }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+              <div style="font-size:14px;font-weight:600">Average time from Full to Collected</div>
+              <div style="font-size:13px;color:#6b6f66">All areas: <b style="color:#1d2420;font-size:18px">{{ avgAll }}</b></div>
+            </div>
+            <sc-for list="{{ avgs }}" as="r" hint-placeholder-count="9">
+              <div style="display:grid;grid-template-columns:130px 1fr 52px;gap:10px;align-items:center;font-size:13px">
+                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+                <div style="height:10px;background:#efece4;border-radius:5px;overflow:hidden"><div style="height:100%;width:{{ r.w }};background:#1f5f45;border-radius:5px"></div></div>
+                <div style="font-family:'JetBrains Mono',monospace;text-align:right">{{ r.v }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isFac }}">
+    <main style="padding:28px;display:flex;flex-direction:column;gap:20px;max-width:1320px;width:100%;box-sizing:border-box;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6f66">Facilitator</div>
+          <h1 style="margin:4px 0 0;font-size:28px;letter-spacing:-0.02em">My areas</h1>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4a4f48">Signed in as
+          <select value="{{ facId }}" onChange="{{ onFac }}" style="border:1px solid #dcd8cc;border-radius:6px;padding:7px 10px;font-size:14px;background:#fff;color:#1d2420;font-weight:600">
+            <sc-for list="{{ facOpts }}" as="f"><option value="{{ f.id }}" selected="{{ f.sel }}">{{ f.name }}</option></sc-for>
+          </select>
+        </label>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <div style="flex:1 1 280px;max-width:100%;display:flex;flex-direction:column;gap:20px">
+          <section style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid #e7e3d8;font-size:13px;font-weight:600;color:#4a4f48">Assigned areas · Full first</div>
+            <sc-for list="{{ myAreas }}" as="a" hint-placeholder-count="4">
+              <button onClick="{{ a.select }}" style="width:100%;text-align:left;border:0;border-bottom:1px solid #efece4;border-left:4px solid {{ a.selBar }};background:{{ a.selBg }};padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;color:#1d2420">
+                <div style="min-width:0"><div style="font-weight:600;font-size:15px">{{ a.name }}</div><div style="font-size:12px;color:#6b6f66">{{ a.line }}</div></div>
+                <span style="flex:none;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:{{ a.bg }};color:{{ a.c }}">{{ a.label }}</span>
+              </button>
+            </sc-for>
+          </section>
+          <section style="background:#fff;border:1px solid #dcd8cc;border-radius:10px;overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid #e7e3d8;font-size:13px;font-weight:600;color:#4a4f48">Alerts received</div>
+            <sc-for list="{{ facInbox }}" as="n" hint-placeholder-count="3">
+              <div style="padding:10px 16px;border-bottom:1px solid #efece4;display:flex;flex-direction:column;gap:3px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b6f66;font-family:'JetBrains Mono',monospace"><span>{{ n.ch }}</span><span>{{ n.when }}</span></div>
+                <div style="font-size:13px;line-height:1.4">{{ n.msg }}</div>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+
+        <sc-if value="{{ sel }}">
+          <section style="flex:3 1 480px;min-width:0;max-width:100%;background:#fff;border:1px solid #dcd8cc;border-radius:10px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="padding:16px 20px;border-bottom:1px solid #e7e3d8;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <div><h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">{{ sel.name }}</h2><div style="font-size:13px;color:#6b6f66">{{ sel.sub }}</div></div>
+              <span style="padding:5px 12px;border-radius:999px;font-size:13px;font-weight:700;background:{{ sel.bg }};color:{{ sel.c }}">{{ sel.label }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px;padding:20px">
+              <div style="position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:{{ sel.snapBg }}">
+                <div style="position:absolute;top:10px;left:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#e8ece4">{{ sel.camId }} · {{ sel.detLabel }}</div>
+                <sc-if value="{{ sel.isFull }}">
+                  <div style="position:absolute;left:22%;top:34%;width:52%;height:46%;border:2px solid #ff8a4c;border-radius:2px"><span style="position:absolute;top:-22px;left:-2px;background:#ff8a4c;color:#1d2420;font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px">overflow {{ sel.confPct }}</span></div>
+                </sc-if>
+                <div style="position:absolute;bottom:10px;left:12px;font-size:12px;color:#c7cdc3">Camera snapshot</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:18px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 18px">
+                  <sc-for list="{{ sel.facts }}" as="f" hint-placeholder-count="4">
+                    <div><div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6f66">{{ f.k }}</div><div style="font-size:16px;font-weight:600;margin-top:3px">{{ f.v }}</div></div>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ sel.isFull }}">
+                  <div style="border-top:1px solid #e7e3d8;padding-top:16px;display:flex;flex-direction:column;gap:12px">
+                    <div style="font-size:15px;font-weight:700">Schedule collection</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                      <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#4a4f48">Date<input type="date" value="{{ sDate }}" onChange="{{ onDate }}" style="border:1px solid #dcd8cc;border-radius:6px;padding:9px 10px;font-size:14px;color:#1d2420"></label>
+                      <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#4a4f48">Time<input type="time" value="{{ sTime }}" onChange="{{ onTime }}" style="border:1px solid #dcd8cc;border-radius:6px;padding:9px 10px;font-size:14px;color:#1d2420"></label>
+                    </div>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#4a4f48">Truck or crew
+                      <select value="{{ sCrew }}" onChange="{{ onCrew }}" style="border:1px solid #dcd8cc;border-radius:6px;padding:9px 10px;font-size:14px;background:#fff;color:#1d2420">
+                        <sc-for list="{{ crews }}" as="cr"><option value="{{ cr.v }}" selected="{{ cr.sel }}">{{ cr.v }}</option></sc-for>
+                      </select>
+                    </label>
+                    <div style="background:#f3f1ea;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.45"><span style="color:#6b6f66">SMS to {{ sel.households }} households:</span> “{{ smsPreview }}”</div>
+                    <button onClick="{{ doSchedule }}" style="border:0;background:#1f5f45;color:#fff;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#174a36">Schedule and notify residents</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sel.isScheduled }}">
+                  <div style="border-top:1px solid #e7e3d8;padding-top:16px;display:flex;flex-direction:column;gap:12px">
+                    <div style="font-size:15px;font-weight:700">Collection scheduled</div>
+                    <div style="font-size:14px;line-height:1.5">{{ sel.schedLine }}</div>
+                    <button onClick="{{ doCollected }}" style="border:0;background:#1d2420;color:#fff;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#000">Mark as collected</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sel.isCollected }}">
+                  <div style="border-top:1px solid #e7e3d8;padding-top:16px;font-size:14px;line-height:1.5;color:#2c55a0"><b>Marked collected.</b> Waiting for the camera to confirm the area is clean…</div>
+                </sc-if>
+                <sc-if value="{{ sel.isClear }}">
+                  <div style="border-top:1px solid #e7e3d8;padding-top:16px;font-size:14px;line-height:1.5;color:#2b7148"><b>Clear.</b> No action needed.</div>
+                </sc-if>
+              </div>
+            </div>
+          </section>
+        </sc-if>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isRes }}">
+    <main style="padding:28px 16px 48px;display:flex;justify-content:center">
+      <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:#4a4f48">Resident of
+          <select value="{{ resArea }}" onChange="{{ onResArea }}" style="border:1px solid #dcd8cc;border-radius:6px;padding:7px 10px;font-size:14px;background:#fff;color:#1d2420;font-weight:600">
+            <sc-for list="{{ areaOpts }}" as="o"><option value="{{ o.id }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for>
+          </select>
+        </label>
+
+        <section style="background:{{ res.bg }};border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:13px;font-weight:600;color:{{ res.c }}">{{ res.name }} · right now</div>
+          <div style="font-size:34px;font-weight:700;letter-spacing:-0.02em;color:{{ res.c }}">{{ res.label }}</div>
+          <div style="font-size:14px;line-height:1.45;color:#1d2420">{{ res.blurb }}</div>
+        </section>
+
+        <section style="background:#fff;border:1px solid #dcd8cc;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6f66">Next collection</div>
+          <div style="font-size:22px;font-weight:700;letter-spacing:-0.01em">{{ res.next }}</div>
+          <div style="font-size:13px;color:#6b6f66">{{ res.nextSub }}</div>
+        </section>
+
+        <section style="background:#fff;border:1px solid #dcd8cc;border-radius:14px;overflow:hidden">
+          <div style="padding:14px 20px;border-bottom:1px solid #e7e3d8;display:flex;justify-content:space-between;align-items:center"><div style="font-size:15px;font-weight:700">Notifications</div><div style="font-size:12px;color:#6b6f66">SMS to 0927 *** 0188</div></div>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ resNotes }}" as="n" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">
+                <div style="background:#eceae2;border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:14px;line-height:1.4;max-width:90%">{{ n.msg }}</div>
+                <div style="font-size:11px;color:#6b6f66;font-family:'JetBrains Mono',monospace;padding-left:4px">{{ n.ch }} · {{ n.when }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noResNotes }}"><div style="font-size:13px;color:#6b6f66">No messages yet.</div></sc-if>
+          </div>
+        </section>
+
+        <sc-if value="{{ reportClosed }}">
+          <button onClick="{{ openReport }}" style="border:1px solid #1d2420;background:transparent;color:#1d2420;border-radius:10px;padding:13px 16px;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#1d2420;color:#fff">Report a problem</button>
+        </sc-if>
+        <sc-if value="{{ reportOpen }}">
+          <section style="background:#fff;border:1px solid #dcd8cc;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:15px;font-weight:700">Report a problem</div><button onClick="{{ closeReport }}" style="border:0;background:none;font-size:13px;color:#6b6f66;cursor:pointer">Cancel</button></div>
+            <div style="font-size:13px;color:#6b6f66;line-height:1.45">Send a photo of an overflowing bin or tambak. Your facilitator will be alerted.</div>
+            <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:140px;border:1.5px dashed #c9c4b6;border-radius:10px;cursor:pointer;overflow:hidden;background:#faf9f5;font-size:14px;color:#4a4f48">
+              <input type="file" accept="image/*" onChange="{{ onPhoto }}" style="display:none">
+              <sc-if value="{{ reportPhoto }}"><div style="width:100%;height:220px;background-size:cover;background-position:center;background-image:{{ reportPhotoBg }}"></div></sc-if>
+              <sc-if value="{{ noPhoto }}"><span style="font-weight:600">Add photo</span><span style="font-size:12px;color:#6b6f66">Tap to take or upload</span></sc-if>
+            </label>
+            <textarea value="{{ reportText }}" onChange="{{ onReportText }}" placeholder="Where exactly? e.g. corner of Mabini St., beside the chapel" rows="3" style="border:1px solid #dcd8cc;border-radius:8px;padding:10px 12px;font-size:14px;resize:vertical;color:#1d2420"></textarea>
+            <button onClick="{{ submitReport }}" style="border:0;background:#1f5f45;color:#fff;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#174a36">Send report</button>
+          </section>
+        </sc-if>
+      </div>
+    </main>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultRole&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;fac&quot;,&quot;res&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;'admin'|'fac'|'res'&quot;}}">
+const NOW = new Date(2026, 9, 10, 9, 14);
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fD = d => `${MON[d.getMonth()]} ${d.getDate()}`;
+const fT = d => { let h = d.getHours(); const m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${String(m).padStart(2, '0')} ${ap}`; };
+const fW = d => (d.toDateString() === NOW.toDateString() ? 'Today ' : fD(d) + ', ') + fT(d);
+const dur = min => min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
+const at = (mo, d, h, m) => new Date(2026, mo, d, h, m);
+const ST = {
+  full: { label: 'Full', c: '#b4441a', bg: '#fbe4d8', o: 0 },
+  scheduled: { label: 'Scheduled', c: '#8a5a00', bg: '#f6e9c4', o: 1 },
+  collected: { label: 'Collected', c: '#2c55a0', bg: '#e1e8f5', o: 2 },
+  clear: { label: 'Clear', c: '#2b7148', bg: '#dbeedf', o: 3 },
+};
+const FAC = [{ id: 'f1', name: 'Ramon Dizon' }, { id: 'f2', name: 'Liza Santos' }, { id: 'f3', name: 'Jun Mercado' }];
+const CREWS = ['Truck 1 · Crew A', 'Truck 2 · Crew B', 'Pushcart crew'];
+const FILLS = { a6: 14, a7: 11, a3: 9, a5: 7, a2: 5, a1: 3, a4: 3, a8: 2, a9: 1 };
+const AVG = { a6: 9.5, a7: 4.2, a3: 6.8, a5: 11.3, a2: 5.1, a1: 3.4, a4: 7.9, a8: 14.6, a9: 12.0 };
+const initAreas = () => [
+  { id: 'a1', name: 'Purok 1', x: 18, y: 22, fac: 'f1', status: 'clear', cam: 'CAM-01', hh: 96, det: at(9, 10, 9, 5), conf: .95 },
+  { id: 'a2', name: 'Purok 2', x: 38, y: 16, fac: 'f1', status: 'scheduled', cam: 'CAM-02', hh: 118, det: at(9, 10, 6, 48), conf: .91, fullAt: at(9, 10, 6, 48), sched: { at: at(9, 11, 6, 30), crew: 'Truck 2 · Crew B' } },
+  { id: 'a3', name: 'Purok 3', x: 70, y: 28, fac: 'f1', status: 'full', cam: 'CAM-03', hh: 142, det: at(9, 10, 7, 0), conf: .93, fullAt: at(9, 10, 7, 0) },
+  { id: 'a4', name: 'Purok 4', x: 84, y: 56, fac: 'f2', status: 'clear', cam: 'CAM-04', hh: 88, det: at(9, 10, 9, 2), conf: .97 },
+  { id: 'a5', name: 'Purok 5', x: 62, y: 70, fac: 'f2', status: 'full', cam: 'CAM-05', hh: 131, det: at(9, 10, 8, 27), conf: .88, fullAt: at(9, 10, 8, 27) },
+  { id: 'a6', name: 'Riverside tambak', x: 24, y: 62, fac: 'f1', status: 'full', cam: 'CAM-06', hh: 64, det: at(9, 10, 4, 2), conf: .97, fullAt: at(9, 10, 4, 2) },
+  { id: 'a7', name: 'Public Market', x: 46, y: 38, fac: 'f3', status: 'scheduled', cam: 'CAM-07', hh: 40, det: at(9, 10, 5, 40), conf: .9, fullAt: at(9, 10, 5, 40), sched: { at: at(9, 10, 10, 0), crew: 'Truck 1 · Crew A' } },
+  { id: 'a8', name: 'Purok 6', x: 20, y: 86, fac: 'f3', status: 'clear', cam: null, hh: 74 },
+  { id: 'a9', name: 'Purok 7', x: 78, y: 86, fac: 'f2', status: 'clear', cam: null, hh: 69 },
+];
+const initNotes = () => [
+  { to: 'fac', fac: 'f1', area: 'a6', ch: 'SMS', at: at(9, 10, 4, 3), msg: 'TambakWatch: Riverside tambak is FULL (97%). Detected 4:02 AM. Open the dashboard to schedule collection.' },
+  { to: 'fac', fac: 'f1', area: 'a3', ch: 'SMS', at: at(9, 10, 7, 1), msg: 'TambakWatch: Purok 3 is FULL (93%). Detected 7:00 AM. Open the dashboard to schedule collection.' },
+  { to: 'fac', fac: 'f2', area: 'a5', ch: 'SMS', at: at(9, 10, 8, 28), msg: 'TambakWatch: Purok 5 is FULL (88%). Detected 8:27 AM. Open the dashboard to schedule collection.' },
+  { to: 'fac', fac: 'f3', area: 'a7', ch: 'SMS', at: at(9, 10, 5, 41), msg: 'TambakWatch: Public Market is FULL (90%). Detected 5:40 AM. Open the dashboard to schedule collection.' },
+  { to: 'res', area: 'a3', ch: 'SMS', at: at(9, 7, 17, 0), msg: 'Garbage collection at Purok 3 on Oct 8, 6:30 AM.' },
+  { to: 'res', area: 'a3', ch: 'SMS', at: at(9, 8, 9, 10), msg: 'Purok 3 has been collected and is now clear. Thank you!' },
+  { to: 'res', area: 'a2', ch: 'SMS', at: at(9, 10, 8, 40), msg: 'Garbage collection at Purok 2 on Oct 11, 6:30 AM.' },
+  { to: 'res', area: 'a7', ch: 'SMS', at: at(9, 10, 7, 15), msg: 'Garbage collection at Public Market on Oct 10, 10:00 AM.' },
+];
+
+class Component extends DCLogic {
+  state = {
+    role: this.props.defaultRole ?? 'admin', areas: initAreas(), notes: initNotes(), tick: 0, toast: '',
+    facId: 'f1', selArea: 'a6', sDate: '2026-10-12', sTime: '07:00', sCrew: CREWS[0],
+    resArea: 'a3', reportOpen: false, reportPhoto: '', reportText: '',
+  };
+  now() { return new Date(NOW.getTime() + this.state.tick * 60000); }
+  flash(t) { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 3600); }
+  upd(id, patch, notes = [], extra = {}) {
+    this.setState(s => ({ ...extra, tick: s.tick + 1, areas: s.areas.map(a => a.id === id ? { ...a, ...patch } : a), notes: [...s.notes, ...notes] }));
+  }
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._c); }
+  simulate(a) {
+    const now = this.now(), conf = .86 + Math.round(Math.random() * 12) / 100;
+    this.upd(a.id, { status: 'full', fullAt: now, det: now, conf, sched: null }, [{ to: 'fac', fac: a.fac, area: a.id, ch: 'SMS', at: now, msg: `TambakWatch: ${a.name} is FULL (${Math.round(conf * 100)}%). Detected ${fT(now)}. Open the dashboard to schedule collection.` }]);
+    this.flash(`${a.cam} detected overflow at ${a.name}. ${FAC.find(f => f.id === a.fac).name} alerted by SMS.`);
+  }
+  schedule(a) {
+    const when = new Date(`${this.state.sDate}T${this.state.sTime}`);
+    if (isNaN(when)) return this.flash('Pick a date and time first.');
+    const msg = `Garbage collection at ${a.name} on ${fD(when)}, ${fT(when)}.`;
+    this.upd(a.id, { status: 'scheduled', sched: { at: when, crew: this.state.sCrew } }, [{ to: 'res', area: a.id, ch: 'SMS', at: this.now(), msg }]);
+    this.flash(`SMS sent to ${a.hh} households in ${a.name} via Semaphore.`);
+  }
+  collected(a) {
+    const now = this.now();
+    if (!a.cam) {
+      this.upd(a.id, { status: 'clear', sched: null }, [{ to: 'res', area: a.id, ch: 'SMS', at: now, msg: `${a.name} has been collected and is now clear. Thank you!` }]);
+      return this.flash(`${a.name} marked clear (no camera to confirm).`);
+    }
+    this.upd(a.id, { status: 'collected' });
+    this.flash(`${a.name} marked collected. Waiting for ${a.cam} to confirm…`);
+    this._c = setTimeout(() => {
+      const t = this.now();
+      this.upd(a.id, { status: 'clear', sched: null, det: t, conf: .96, fullAt: null }, [{ to: 'res', area: a.id, ch: 'SMS', at: t, msg: `${a.name} has been collected and is now clear. Thank you!` }]);
+      this.flash(`${a.cam} confirmed ${a.name} is clean. Status: Clear.`);
+    }, 3000);
+  }
+  submitReport(a) {
+    const now = this.now(), note = this.state.reportText.trim();
+    const patch = a.status === 'clear' ? { status: 'full', fullAt: now, det: now, reported: true } : {};
+    this.upd(a.id, patch, [{ to: 'fac', fac: a.fac, area: a.id, ch: 'In-app', at: now, msg: `Resident report at ${a.name}${note ? ': “' + note + '”' : ''}${this.state.reportPhoto ? ' (photo attached)' : ''}` }], { reportOpen: false, reportPhoto: '', reportText: '' });
+    this.flash(`Report sent. ${FAC.find(f => f.id === a.fac).name} has been alerted.`);
+  }
+  view(a) {
+    const s = ST[a.status], now = this.now();
+    const fullMin = a.fullAt ? Math.max(0, Math.round((now - a.fullAt) / 60000)) : 0;
+    const isFull = a.status === 'full';
+    const snapBg = !a.cam ? '#d9d5c9' : isFull
+      ? 'repeating-linear-gradient(135deg,#3b3f37 0 12px,#34382f 12px 24px)'
+      : 'repeating-linear-gradient(135deg,#43504a 0 12px,#3d4943 12px 24px)';
+    const line = isFull ? `Full for ${dur(fullMin)}${a.reported ? ' · resident report' : ''}`
+      : a.status === 'scheduled' ? `${fD(a.sched.at)}, ${fT(a.sched.at)} · ${a.sched.crew}`
+      : a.status === 'collected' ? 'Awaiting camera confirmation' : a.cam ? `Last check ${fT(a.det)}` : 'No camera · resident reports';
+    const facts = [
+      { k: 'Time detected', v: a.fullAt ? fW(a.fullAt) : '—' },
+      { k: 'Full for', v: isFull ? dur(fullMin) : '—' },
+      { k: 'Confidence', v: a.cam && a.conf ? Math.round(a.conf * 100) + '%' : '—' },
+      { k: 'Camera', v: a.cam || 'None' },
+    ];
+    return {
+      ...a, ...s, xp: a.x + '%', yp: a.y + '%', isFull, isScheduled: a.status === 'scheduled', isCollected: a.status === 'collected', isClear: a.status === 'clear',
+      sub: `${FAC.find(f => f.id === a.fac).name} · ${a.hh} households`, camId: a.cam || 'No camera', camLabel: a.cam || '—',
+      detLabel: a.det ? fT(a.det) : '', confPct: Math.round((a.conf || 0) * 100) + '%', snapBg, line, facts, households: a.hh,
+      schedLine: a.sched ? `${fD(a.sched.at)}, ${fT(a.sched.at)} · ${a.sched.crew}. Residents were notified by SMS.` : '',
+      canSim: !!a.cam && (a.status === 'clear'),
+      facOpts: FAC.map(f => ({ ...f, sel: f.id === a.fac })),
+      simulate: () => this.simulate(a),
+      assign: e => { const v = e.target.value; this.upd(a.id, { fac: v }); this.flash(`${a.name} assigned to ${FAC.find(f => f.id === v).name}.`); },
+      open: () => this.setState({ role: 'fac', facId: a.fac, selArea: a.id }),
+      select: () => this.setState({ selArea: a.id }),
+    };
+  }
+  renderVals() {
+    const st = this.state, all = st.areas.map(a => this.view(a));
+    const roles = [['admin', 'Admin'], ['fac', 'Facilitator'], ['res', 'Resident']].map(([id, label]) => ({
+      label, bg: st.role === id ? '#f3f1ea' : 'transparent', fg: st.role === id ? '#1d2420' : '#c7cdc3', pick: () => this.setState({ role: id }),
+    }));
+    const counts = ['clear', 'full', 'scheduled', 'collected'].map(k => ({ label: ST[k].label, c: ST[k].c, n: all.filter(a => a.status === k).length }));
+    const maxF = Math.max(...Object.values(FILLS)), maxA = Math.max(...Object.values(AVG));
+    const nm = id => st.areas.find(a => a.id === id).name;
+    const fills = Object.entries(FILLS).map(([id, n]) => ({ name: nm(id), n, w: (n / maxF * 100) + '%' }));
+    const avgs = Object.entries(AVG).sort((a, b) => b[1] - a[1]).map(([id, v]) => ({ name: nm(id), v: v.toFixed(1) + 'h', w: (v / maxA * 100) + '%' }));
+    const avgAll = (Object.entries(AVG).reduce((s, [id, v]) => s + v * FILLS[id], 0) / Object.values(FILLS).reduce((a, b) => a + b, 0)).toFixed(1) + ' h';
+
+    const mine = all.filter(a => a.fac === st.facId).sort((a, b) => a.o - b.o || ((a.fullAt || 0) - (b.fullAt || 0)));
+    const selV = mine.find(a => a.id === st.selArea) || mine[0] || null;
+    const myAreas = mine.map(a => ({ ...a, selBar: selV && a.id === selV.id ? '#1d2420' : 'transparent', selBg: selV && a.id === selV.id ? '#f6f4ee' : '#fff' }));
+    const facInbox = st.notes.filter(n => n.to === 'fac' && n.fac === st.facId).sort((a, b) => b.at - a.at).slice(0, 5).map(n => ({ ...n, when: fW(n.at) }));
+    let smsPreview = '';
+    if (selV) { const w = new Date(`${st.sDate}T${st.sTime}`); smsPreview = isNaN(w) ? '' : `Garbage collection at ${selV.name} on ${fD(w)}, ${fT(w)}.`; }
+
+    const rv = all.find(a => a.id === st.resArea);
+    const blurb = { full: 'Bins in your area are full. Your facilitator has been alerted and will schedule a pickup.', scheduled: 'A pickup has been scheduled. Please bring out your trash before the truck arrives.', collected: 'Trash was just collected. The camera is confirming the area is clean.', clear: 'Bins in your area have space. No action needed.' }[rv.status];
+    const res = { ...rv, blurb, next: rv.sched ? `${fD(rv.sched.at)}, ${fT(rv.sched.at)}` : 'Not yet scheduled', nextSub: rv.sched ? rv.sched.crew : 'You’ll get an SMS as soon as a pickup is set.' };
+    const resNotes = st.notes.filter(n => n.to === 'res' && n.area === st.resArea).sort((a, b) => b.at - a.at).map(n => ({ ...n, when: fW(n.at) }));
+
+    return {
+      nowLabel: fT(this.now()), roles, toast: st.toast,
+      isAdmin: st.role === 'admin', isFac: st.role === 'fac', isRes: st.role === 'res',
+      areaCount: all.length, camCount: all.filter(a => a.cam).length, counts, areas: all, camAreas: all.filter(a => a.cam), fills, avgs, avgAll,
+      facOpts: FAC.map(f => ({ ...f, sel: f.id === st.facId })), facId: st.facId, onFac: e => this.setState({ facId: e.target.value, selArea: null }),
+      myAreas, facInbox, sel: selV, crews: CREWS.map(v => ({ v, sel: v === st.sCrew })), sDate: st.sDate, sTime: st.sTime, sCrew: st.sCrew, smsPreview,
+      onDate: e => this.setState({ sDate: e.target.value }), onTime: e => this.setState({ sTime: e.target.value }), onCrew: e => this.setState({ sCrew: e.target.value }),
+      doSchedule: () => selV && this.schedule(st.areas.find(a => a.id === selV.id)),
+      doCollected: () => selV && this.collected(st.areas.find(a => a.id === selV.id)),
+      areaOpts: all.map(a => ({ id: a.id, name: a.name, sel: a.id === st.resArea })), resArea: st.resArea, onResArea: e => this.setState({ resArea: e.target.value, reportOpen: false }),
+      res, resNotes, noResNotes: resNotes.length === 0,
+      reportOpen: st.reportOpen, reportClosed: !st.reportOpen, openReport: () => this.setState({ reportOpen: true }), closeReport: () => this.setState({ reportOpen: false, reportPhoto: '', reportText: '' }),
+      reportPhoto: st.reportPhoto, reportPhotoBg: st.reportPhoto ? `url(${st.reportPhoto})` : 'none', noPhoto: !st.reportPhoto, reportText: st.reportText,
+      onPhoto: e => { const f = e.target.files && e.target.files[0]; if (f) this.setState({ reportPhoto: URL.createObjectURL(f) }); },
+      onReportText: e => this.setState({ reportText: e.target.value }),
+      submitReport: () => this.submitReport(st.areas.find(a => a.id === st.resArea)),
+    };
+  }
+}
+</script>
+</body>
+</html>

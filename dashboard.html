@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>TambakWatch · Dashboard</title>
+		<link rel="stylesheet" href="common.css" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+		<style>
+			/* ---------- TambakWatch dashboard (driven by the 3D bin state) ---------- */
+			:root {
+				--st-full: #b4441a;
+				--st-full-bg: #fbe4d8;
+				--st-sched: #8a5a00;
+				--st-sched-bg: #f6e9c4;
+				--st-coll: #2c55a0;
+				--st-coll-bg: #e1e8f5;
+				--st-clear: #2b7148;
+				--st-clear-bg: #dbeedf;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) {
+					--st-full: #fb923c;
+					--st-full-bg: #3a2216;
+					--st-sched: #e5b84a;
+					--st-sched-bg: #3a3016;
+					--st-coll: #8fb0ee;
+					--st-coll-bg: #1b2740;
+					--st-clear: #3fb489;
+					--st-clear-bg: #16322a;
+				}
+			}
+			:root[data-theme="dark"] {
+				--st-full: #fb923c;
+				--st-full-bg: #3a2216;
+				--st-sched: #e5b84a;
+				--st-sched-bg: #3a3016;
+				--st-coll: #8fb0ee;
+				--st-coll-bg: #1b2740;
+				--st-clear: #3fb489;
+				--st-clear-bg: #16322a;
+			}
+			#tw {
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				margin-top: 8px;
+			}
+			#tw h2 {
+				margin: 0;
+			}
+			.tw-head {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: space-between;
+				align-items: flex-end;
+				gap: 10px 16px;
+			}
+			.tw-meta {
+				font: 400 12px var(--mono);
+				color: var(--muted);
+			}
+			.tw-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				font: 500 12px var(--mono);
+				padding: 6px 10px;
+				border-radius: 999px;
+				border: 1px solid var(--line);
+				background: var(--panel);
+				color: var(--ink);
+			}
+			.tw-link i {
+				width: 9px;
+				height: 9px;
+				border-radius: 50%;
+				background: var(--st-clear);
+			}
+			.tw-link.full i {
+				background: var(--st-full);
+			}
+			.tw-card {
+				background: var(--panel);
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				overflow: hidden;
+				min-width: 0;
+			}
+			.tw-ch {
+				padding: 12px 16px;
+				border-bottom: 1px solid var(--line);
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+			.tw-ch h3 {
+				margin: 0;
+				font: 600 15px var(--body);
+			}
+			.tw-note {
+				font-size: 12px;
+				color: var(--muted);
+			}
+			.tw-pill {
+				display: inline-block;
+				padding: 3px 9px;
+				border-radius: 999px;
+				font-size: 12px;
+				font-weight: 600;
+				white-space: nowrap;
+			}
+			.tw-grid {
+				display: grid;
+				gap: 16px;
+				grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+			}
+			.tw-counts {
+				display: grid;
+				gap: 10px;
+				grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			}
+			.tw-count {
+				padding: 14px 16px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+			.tw-count div:first-child {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--muted);
+			}
+			.tw-count i {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+			}
+			.tw-count b {
+				font: 600 38px/1 var(--display);
+			}
+			.tw-map {
+				position: relative;
+				min-height: 380px;
+				background-color: var(--bg);
+				background-image:
+					linear-gradient(var(--line) 1px, transparent 1px),
+					linear-gradient(90deg, var(--line) 1px, transparent 1px);
+				background-size: 40px 40px;
+			}
+			.tw-map .road {
+				position: absolute;
+				background: var(--panel);
+				opacity: 0.9;
+			}
+			.tw-map .river {
+				position: absolute;
+				left: 4%;
+				top: 50%;
+				width: 46%;
+				height: 22px;
+				background: #9ec3cc;
+				opacity: 0.55;
+				border-radius: 12px;
+				transform: rotate(-8deg);
+			}
+			.tw-pin {
+				position: absolute;
+				transform: translate(-50%, -50%);
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				border: 1px solid var(--line);
+				background: var(--panel);
+				color: var(--ink);
+				padding: 5px 9px 5px 6px;
+				border-radius: 999px;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+				cursor: pointer;
+				font: 600 12px var(--body);
+				white-space: nowrap;
+			}
+			.tw-pin i {
+				width: 12px;
+				height: 12px;
+				border-radius: 50%;
+			}
+			.tw-pin.live {
+				border-color: var(--accent);
+			}
+			.tw-scroll {
+				overflow-x: auto;
+			}
+			.tw-row {
+				display: grid;
+				grid-template-columns: 1.3fr 0.9fr 1.3fr 0.8fr;
+				gap: 10px;
+				align-items: center;
+				padding: 10px 16px;
+				border-bottom: 1px solid var(--line);
+				font-size: 14px;
+				min-width: 520px;
+			}
+			.tw-row.th {
+				font: 500 11px var(--mono);
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--muted);
+			}
+			.tw-row:last-child {
+				border-bottom: 0;
+			}
+			.tw-row .sm {
+				font-size: 12px;
+				color: var(--muted);
+			}
+			.tw-mono {
+				font-family: var(--mono);
+				font-size: 12px;
+			}
+			.tw-in {
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				padding: 7px 9px;
+				font: 14px var(--body);
+				background: var(--panel);
+				color: var(--ink);
+				min-width: 0;
+			}
+			.tw-snaps {
+				display: grid;
+				gap: 12px;
+				grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+			}
+			.tw-snap {
+				position: relative;
+				aspect-ratio: 4 / 3;
+				background-size: cover;
+				background-position: center;
+				overflow: hidden;
+			}
+			.tw-snap .cap {
+				position: absolute;
+				top: 8px;
+				left: 10px;
+				font: 500 11px var(--mono);
+				color: #e8ece4;
+				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+			}
+			.tw-snap .liveb {
+				position: absolute;
+				right: 8px;
+				bottom: 8px;
+				font: 600 10px var(--mono);
+				letter-spacing: 0.06em;
+				background: var(--accent);
+				color: var(--accent-ink);
+				padding: 2px 6px;
+				border-radius: 4px;
+			}
+			.tw-box {
+				position: absolute;
+				border: 2px solid #ff8a4c;
+				border-radius: 2px;
+			}
+			.tw-box span {
+				position: absolute;
+				top: -20px;
+				left: -2px;
+				background: #ff8a4c;
+				color: #1d2420;
+				font: 500 10px var(--mono);
+				padding: 2px 5px;
+				white-space: nowrap;
+			}
+			.tw-snapfoot {
+				padding: 10px 12px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 8px;
+			}
+			.tw-btn {
+				border: 0;
+				background: var(--accent);
+				color: var(--accent-ink);
+				border-radius: 8px;
+				padding: 12px 16px;
+				font: 600 15px var(--body);
+				cursor: pointer;
+			}
+			.tw-btn.dark {
+				background: var(--ink);
+				color: var(--panel);
+			}
+			.tw-btn.ghost {
+				background: transparent;
+				color: var(--ink);
+				border: 1px solid var(--ink);
+			}
+			.tw-btn.sm {
+				padding: 6px 8px;
+				font-size: 12px;
+				font-weight: 500;
+				background: var(--panel);
+				color: var(--ink);
+				border: 1px solid var(--line);
+			}
+			.tw-bars {
+				padding: 16px;
+				display: flex;
+				flex-direction: column;
+				gap: 11px;
+			}
+			.tw-bar {
+				display: grid;
+				grid-template-columns: 130px 1fr 52px;
+				gap: 10px;
+				align-items: center;
+				font-size: 13px;
+			}
+			.tw-bar .nm {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.tw-bar .tr {
+				height: 10px;
+				background: var(--bg);
+				border-radius: 5px;
+				overflow: hidden;
+			}
+			.tw-bar .tr div {
+				height: 100%;
+				border-radius: 5px;
+			}
+			.tw-bar .v {
+				font-family: var(--mono);
+				text-align: right;
+			}
+			.tw-fac {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 16px;
+				align-items: flex-start;
+			}
+			.tw-side {
+				flex: 1 1 280px;
+				max-width: 100%;
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+			}
+			.tw-area {
+				width: 100%;
+				text-align: left;
+				border: 0;
+				border-bottom: 1px solid var(--line);
+				border-left: 4px solid transparent;
+				background: var(--panel);
+				padding: 12px 14px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 10px;
+				cursor: pointer;
+				color: var(--ink);
+				font: 15px var(--body);
+			}
+			.tw-area.on {
+				border-left-color: var(--ink);
+				background: var(--bg);
+			}
+			.tw-area b {
+				display: block;
+				font-weight: 600;
+			}
+			.tw-inbox {
+				padding: 10px 16px;
+				border-bottom: 1px solid var(--line);
+				display: flex;
+				flex-direction: column;
+				gap: 3px;
+			}
+			.tw-inbox div:first-child {
+				display: flex;
+				justify-content: space-between;
+				font: 11px var(--mono);
+				color: var(--muted);
+			}
+			.tw-inbox div:last-child {
+				font-size: 13px;
+				line-height: 1.4;
+			}
+			.tw-detail {
+				flex: 3 1 480px;
+				min-width: 0;
+				max-width: 100%;
+			}
+			.tw-detail-body {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+				gap: 20px;
+				padding: 18px;
+			}
+			.tw-facts {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 14px 18px;
+			}
+			.tw-facts small {
+				display: block;
+				font: 500 11px var(--mono);
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--muted);
+			}
+			.tw-facts div div {
+				font-size: 16px;
+				font-weight: 600;
+				margin-top: 3px;
+			}
+			.tw-act {
+				border-top: 1px solid var(--line);
+				padding-top: 16px;
+				margin-top: 18px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.tw-act > b {
+				font-size: 15px;
+			}
+			.tw-lbl {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				font-size: 12px;
+				font-weight: 600;
+				color: var(--muted);
+			}
+			.tw-two {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 10px;
+			}
+			.tw-sms {
+				background: var(--bg);
+				border-radius: 6px;
+				padding: 10px 12px;
+				font-size: 13px;
+				line-height: 1.45;
+			}
+			.tw-sms span {
+				color: var(--muted);
+			}
+			.tw-res {
+				width: 100%;
+				max-width: 440px;
+				margin: 0 auto;
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+			}
+			.tw-hero {
+				border-radius: 14px;
+				padding: 22px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+			.tw-hero b {
+				font: 600 38px/1.05 var(--display);
+			}
+			.tw-chat {
+				padding: 14px 16px;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.tw-bubble {
+				background: var(--bg);
+				border-radius: 12px 12px 12px 4px;
+				padding: 10px 12px;
+				font-size: 14px;
+				line-height: 1.4;
+				max-width: 90%;
+			}
+			.tw-when {
+				font: 11px var(--mono);
+				color: var(--muted);
+				padding: 3px 0 0 4px;
+			}
+			.tw-drop {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+				min-height: 130px;
+				border: 1.5px dashed var(--line);
+				border-radius: 10px;
+				cursor: pointer;
+				overflow: hidden;
+				font-size: 14px;
+				color: var(--muted);
+			}
+			.tw-drop input {
+				display: none;
+			}
+			.tw-drop .ph {
+				width: 100%;
+				height: 200px;
+				background-size: cover;
+				background-position: center;
+			}
+			#twToast {
+				position: fixed;
+				bottom: 24px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 20;
+				background: var(--tag);
+				color: var(--tag-ink);
+				padding: 12px 18px;
+				border-radius: 8px;
+				font-size: 14px;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+				max-width: 90vw;
+			}
+			#twToast[hidden] {
+				display: none;
+			}
+		</style>
+	</head>
+	<body style="margin: 0">
+		<nav class="nav" aria-label="Main">
+			<div class="nav-in">
+				<a class="nav-brand" href="index.html">Bin Watch</a>
+				<div class="nav-links">
+					<a href="index.html">3D prototype</a>
+					<a href="dashboard.html" aria-current="page">Dashboard</a>
+				</div>
+			</div>
+		</nav>
+		<div class="wrap">
+			<section id="tw" aria-label="TambakWatch dashboard">
+				<div id="twApp"></div>
+			</section>
+		</div>
+		<div id="twToast" role="status" hidden></div>
+		<script src="store.js"></script>
+		<script>
+			/* TambakWatch dashboard. The 3D bin above is the live sensor for the
+			   area LIVE; everything else is simulated demo data. */
+			(function () {
+				const root = document.getElementById("twApp"),
+					toastEl = document.getElementById("twToast");
+								const LIVE = "a6";
+				const esc = (s) =>
+					String(s).replace(
+						/[&<>"']/g,
+						(c) =>
+							({
+								"&": "&amp;",
+								"<": "&lt;",
+								">": "&gt;",
+								'"': "&quot;",
+								"'": "&#39;",
+							})[c],
+					);
+				const NOW = new Date(2026, 9, 10, 9, 14);
+				const MON = [
+					"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+					"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+				];
+				const fD = (d) => `${MON[d.getMonth()]} ${d.getDate()}`;
+				const fT = (d) => {
+					let h = d.getHours();
+					const m = d.getMinutes(),
+						ap = h >= 12 ? "PM" : "AM";
+					h = h % 12 || 12;
+					return `${h}:${String(m).padStart(2, "0")} ${ap}`;
+				};
+				const fW = (d) =>
+					(d.toDateString() === NOW.toDateString() ? "Today " : fD(d) + ", ") +
+					fT(d);
+				const dur = (min) =>
+					min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
+				const at = (mo, d, h, m) => new Date(2026, mo, d, h, m);
+				const ST = {
+					full: { label: "Full", c: "var(--st-full)", bg: "var(--st-full-bg)", o: 0 },
+					scheduled: { label: "Scheduled", c: "var(--st-sched)", bg: "var(--st-sched-bg)", o: 1 },
+					collected: { label: "Collected", c: "var(--st-coll)", bg: "var(--st-coll-bg)", o: 2 },
+					clear: { label: "Clear", c: "var(--st-clear)", bg: "var(--st-clear-bg)", o: 3 },
+				};
+				const FAC = [
+					{ id: "f1", name: "Ramon Dizon" },
+					{ id: "f2", name: "Liza Santos" },
+					{ id: "f3", name: "Jun Mercado" },
+				];
+				const facName = (id) => FAC.find((f) => f.id === id).name;
+				const CREWS = ["Truck 1 · Crew A", "Truck 2 · Crew B", "Pushcart crew"];
+				const FILLS = { a6: 14, a7: 11, a3: 9, a5: 7, a2: 5, a1: 3, a4: 3, a8: 2, a9: 1 };
+				const AVG = { a6: 9.5, a7: 4.2, a3: 6.8, a5: 11.3, a2: 5.1, a1: 3.4, a4: 7.9, a8: 14.6, a9: 12.0 };
+				const initAreas = () => [
+					{ id: "a1", name: "Purok 1", x: 18, y: 22, fac: "f1", status: "clear", cam: "CAM-01", hh: 96, det: at(9, 10, 9, 5), conf: 0.95 },
+					{ id: "a2", name: "Purok 2", x: 38, y: 16, fac: "f1", status: "scheduled", cam: "CAM-02", hh: 118, det: at(9, 10, 6, 48), conf: 0.91, fullAt: at(9, 10, 6, 48), sched: { at: at(9, 11, 6, 30), crew: "Truck 2 · Crew B" } },
+					{ id: "a3", name: "Purok 3", x: 70, y: 28, fac: "f1", status: "full", cam: "CAM-03", hh: 142, det: at(9, 10, 7, 0), conf: 0.93, fullAt: at(9, 10, 7, 0) },
+					{ id: "a4", name: "Purok 4", x: 84, y: 56, fac: "f2", status: "clear", cam: "CAM-04", hh: 88, det: at(9, 10, 9, 2), conf: 0.97 },
+					{ id: "a5", name: "Purok 5", x: 62, y: 70, fac: "f2", status: "full", cam: "CAM-05", hh: 131, det: at(9, 10, 8, 27), conf: 0.88, fullAt: at(9, 10, 8, 27) },
+					{ id: "a6", name: "Riverside tambak", x: 24, y: 62, fac: "f1", status: "full", cam: "CAM-06", hh: 64, det: at(9, 10, 4, 2), conf: 0.97, fullAt: at(9, 10, 4, 2) },
+					{ id: "a7", name: "Public Market", x: 46, y: 38, fac: "f3", status: "scheduled", cam: "CAM-07", hh: 40, det: at(9, 10, 5, 40), conf: 0.9, fullAt: at(9, 10, 5, 40), sched: { at: at(9, 10, 10, 0), crew: "Truck 1 · Crew A" } },
+					{ id: "a8", name: "Purok 6", x: 20, y: 86, fac: "f3", status: "clear", cam: null, hh: 74 },
+					{ id: "a9", name: "Purok 7", x: 78, y: 86, fac: "f2", status: "clear", cam: null, hh: 69 },
+				];
+				const alertMsg = (a, conf, when) =>
+					`TambakWatch: ${a.name} is FULL (${Math.round(conf * 100)}%). Detected ${fT(when)}. Open the dashboard to schedule collection.`;
+				const initNotes = () => [
+					{ to: "fac", fac: "f1", area: "a6", ch: "SMS", at: at(9, 10, 4, 3), msg: "TambakWatch: Riverside tambak is FULL (97%). Detected 4:02 AM. Open the dashboard to schedule collection." },
+					{ to: "fac", fac: "f1", area: "a3", ch: "SMS", at: at(9, 10, 7, 1), msg: "TambakWatch: Purok 3 is FULL (93%). Detected 7:00 AM. Open the dashboard to schedule collection." },
+					{ to: "fac", fac: "f2", area: "a5", ch: "SMS", at: at(9, 10, 8, 28), msg: "TambakWatch: Purok 5 is FULL (88%). Detected 8:27 AM. Open the dashboard to schedule collection." },
+					{ to: "fac", fac: "f3", area: "a7", ch: "SMS", at: at(9, 10, 5, 41), msg: "TambakWatch: Public Market is FULL (90%). Detected 5:40 AM. Open the dashboard to schedule collection." },
+					{ to: "res", area: "a3", ch: "SMS", at: at(9, 7, 17, 0), msg: "Garbage collection at Purok 3 on Oct 8, 6:30 AM." },
+					{ to: "res", area: "a3", ch: "SMS", at: at(9, 8, 9, 10), msg: "Purok 3 has been collected and is now clear. Thank you!" },
+					{ to: "res", area: "a2", ch: "SMS", at: at(9, 10, 8, 40), msg: "Garbage collection at Purok 2 on Oct 11, 6:30 AM." },
+					{ to: "res", area: "a7", ch: "SMS", at: at(9, 10, 7, 15), msg: "Garbage collection at Public Market on Oct 10, 10:00 AM." },
+				];
+
+				const S = {
+					role: "admin", areas: initAreas(), notes: initNotes(), tick: 0,
+					facId: "f1", selArea: LIVE, sDate: "2026-10-12", sTime: "07:00", sCrew: CREWS[0],
+					resArea: LIVE, reportOpen: false, reportPhoto: "", reportText: "",
+					snap: binStore.getSnap() || { img: "", box: null, full: true },
+				};
+				/* keep the demo data between page loads */
+				const KD = "binwatch.dash";
+				const D = (v) => (v ? new Date(v) : v);
+				try {
+					const j = JSON.parse(localStorage.getItem(KD) || "null");
+					if (j && j.areas && j.notes) {
+						S.areas = j.areas.map((a) => ({ ...a, det: D(a.det), fullAt: D(a.fullAt), sched: a.sched ? { ...a.sched, at: new Date(a.sched.at) } : a.sched }));
+						S.notes = j.notes.map((n) => ({ ...n, at: new Date(n.at) }));
+						["role", "tick", "facId", "selArea", "sDate", "sTime", "sCrew", "resArea"].forEach((k) => { if (j[k] !== undefined) S[k] = j[k]; });
+					}
+				} catch (e) {}
+				function save() {
+					try {
+						const { role, tick, facId, selArea, sDate, sTime, sCrew, resArea, areas, notes } = S;
+						localStorage.setItem(KD, JSON.stringify({ role, tick, facId, selArea, sDate, sTime, sCrew, resArea, areas, notes }));
+					} catch (e) {}
+				}
+				const nowD = () => new Date(NOW.getTime() + S.tick * 60000);
+				const live = () => S.areas.find((a) => a.id === LIVE);
+				let toastT, collectT;
+				function flash(t) {
+					toastEl.textContent = t;
+					toastEl.hidden = false;
+					clearTimeout(toastT);
+					toastT = setTimeout(() => (toastEl.hidden = true), 3800);
+				}
+				function upd(id, patch, notes = [], extra = {}) {
+					S.tick++;
+					S.areas = S.areas.map((a) => (a.id === id ? { ...a, ...patch } : a));
+					S.notes = [...S.notes, ...notes];
+					Object.assign(S, extra);
+					render();
+				}
+
+				/* ----- the 3D bin drives the live area ----- */
+				function applyBin(full) {
+					const a = live(),
+						now = nowD();
+					if (full) {
+						if (a.status === "full" || a.status === "scheduled") return;
+						const conf = 0.9 + Math.round(Math.random() * 8) / 100;
+						upd(LIVE, { status: "full", fullAt: now, det: now, conf, sched: null, reported: false },
+							[{ to: "fac", fac: a.fac, area: LIVE, ch: "SMS", at: now, msg: alertMsg(a, conf, now) }]);
+						flash(`${a.cam} sees overflow in the 3D render at ${a.name}. ${facName(a.fac)} alerted by SMS.`);
+					} else {
+						if (a.status === "clear") return;
+						const confirmed = a.status === "collected";
+						upd(LIVE, { status: "clear", sched: null, fullAt: null, det: now, conf: 0.96, reported: false },
+							[{ to: "res", area: LIVE, ch: "SMS", at: now, msg: `${a.name} has been collected and is now clear. Thank you!` }]);
+						flash(confirmed
+							? `${a.cam} confirmed ${a.name} is clean. Status: Clear.`
+							: `${a.cam} sees ${a.name} is clean in the 3D render. Status: Clear.`);
+					}
+				}
+				const requestBin = (f) => {
+					binStore.setFull(f); /* the 3D page picks this up */
+					applyBin(f);
+				};
+				/* the 3D page changed the bin or took a new camera snapshot */
+				binStore.onChange((c) => {
+					if (c.full !== undefined) applyBin(c.full);
+					if (c.snap) {
+						S.snap = c.snap;
+						render();
+					}
+				});
+
+				/* ----- actions ----- */
+				function simulate(a) {
+					if (a.id === LIVE) return requestBin(true);
+					const now = nowD(), conf = 0.86 + Math.round(Math.random() * 12) / 100;
+					upd(a.id, { status: "full", fullAt: now, det: now, conf, sched: null },
+						[{ to: "fac", fac: a.fac, area: a.id, ch: "SMS", at: now, msg: alertMsg(a, conf, now) }]);
+					flash(`${a.cam} detected overflow at ${a.name}. ${facName(a.fac)} alerted by SMS.`);
+				}
+				function schedule(a) {
+					const when = new Date(`${S.sDate}T${S.sTime}`);
+					if (isNaN(when)) return flash("Pick a date and time first.");
+					upd(a.id, { status: "scheduled", sched: { at: when, crew: S.sCrew } },
+						[{ to: "res", area: a.id, ch: "SMS", at: nowD(), msg: `Garbage collection at ${a.name} on ${fD(when)}, ${fT(when)}.` }]);
+					flash(`SMS sent to ${a.hh} households in ${a.name} via Semaphore.`);
+				}
+				function collected(a) {
+					const now = nowD();
+					if (!a.cam) {
+						upd(a.id, { status: "clear", sched: null },
+							[{ to: "res", area: a.id, ch: "SMS", at: now, msg: `${a.name} has been collected and is now clear. Thank you!` }]);
+						return flash(`${a.name} marked clear (no camera to confirm).`);
+					}
+					upd(a.id, { status: "collected" });
+					flash(`${a.name} marked collected. Waiting for ${a.cam} to confirm…`);
+					clearTimeout(collectT);
+					collectT = setTimeout(() => {
+						if (a.id === LIVE) {
+							/* the bin in the 3D render empties; the camera then confirms */
+							if (live().status === "collected") requestBin(false);
+							return;
+						}
+						const t = nowD();
+						upd(a.id, { status: "clear", sched: null, det: t, conf: 0.96, fullAt: null },
+							[{ to: "res", area: a.id, ch: "SMS", at: t, msg: `${a.name} has been collected and is now clear. Thank you!` }]);
+						flash(`${a.cam} confirmed ${a.name} is clean. Status: Clear.`);
+					}, 3000);
+				}
+				function submitReport(a) {
+					const now = nowD(), note = S.reportText.trim();
+					/* the live area's status only changes when the render/camera says so */
+					const patch = a.status === "clear" && a.id !== LIVE
+						? { status: "full", fullAt: now, det: now, reported: true } : {};
+					upd(a.id, patch,
+						[{ to: "fac", fac: a.fac, area: a.id, ch: "In-app", at: now,
+							msg: `Resident report at ${a.name}${note ? ": “" + note + "”" : ""}${S.reportPhoto ? " (photo attached)" : ""}` }],
+						{ reportOpen: false, reportPhoto: "", reportText: "" });
+					flash(`Report sent. ${facName(a.fac)} has been alerted.`);
+				}
+
+				/* ----- view model ----- */
+				function view(a) {
+					const s = ST[a.status], now = nowD();
+					const fullMin = a.fullAt ? Math.max(0, Math.round((now - a.fullAt) / 60000)) : 0;
+					const isFull = a.status === "full";
+					const line = isFull
+						? `Full for ${dur(fullMin)}${a.reported ? " · resident report" : ""}`
+						: a.status === "scheduled" ? `${fD(a.sched.at)}, ${fT(a.sched.at)} · ${a.sched.crew}`
+						: a.status === "collected" ? "Awaiting camera confirmation"
+						: a.cam ? `Last check ${fT(a.det)}` : "No camera · resident reports";
+					return {
+						...a, ...s, isFull, fullMin, line,
+						isLive: a.id === LIVE,
+						sub: `${facName(a.fac)} · ${a.hh} households`,
+						confPct: Math.round((a.conf || 0) * 100) + "%",
+						canSim: !!a.cam && a.status === "clear",
+					};
+				}
+				const pill = (a) => `<span class="tw-pill" style="background:${a.bg};color:${a.c}">${a.label}</span>`;
+				const opts = (list, sel, val, txt) =>
+					list.map((o) => `<option value="${esc(val(o))}"${val(o) === sel ? " selected" : ""}>${esc(txt(o))}</option>`).join("");
+
+				function snapHtml(a, big) {
+					const useLive = a.isLive && S.snap.img;
+					const bg = useLive
+						? `background-image:url('${S.snap.img}')`
+						: !a.cam ? "background:var(--line)"
+						: `background:repeating-linear-gradient(135deg,${a.isFull ? "#3b3f37 0 12px,#34382f 12px 24px" : "#43504a 0 12px,#3d4943 12px 24px"})`;
+					const synced = !useLive || S.snap.full === a.isFull;
+					const b = useLive && S.snap.box ? S.snap.box : { l: 22, t: 34, w: 52, h: 46 };
+					const box = a.isFull && synced
+						? `<div class="tw-box" style="left:${b.l}%;top:${b.t}%;width:${b.w}%;height:${b.h}%"><span>overflow ${a.confPct}</span></div>` : "";
+					return `<div class="tw-snap" style="${bg};${big ? "border-radius:8px" : ""}">
+						<div class="cap">${esc(a.cam || "No camera")}${a.det ? " · " + fT(a.det) : ""}</div>${box}
+						${a.isLive ? '<span class="liveb">LIVE · 3D</span>' : ""}</div>`;
+				}
+
+				function tabs() {
+					const t = [["admin", "Admin"], ["fac", "Facilitator"], ["res", "Resident"]];
+					const full = binStore.getFull();
+					return `<div class="tw-head">
+						<div><span class="lbl">Brgy. San Isidro · Sat, Oct 10, 2026 · ${fT(nowD())}</span><h2>TambakWatch dashboard</h2>
+						<p class="sub">Status updates follow the 3D bin above: <b>${esc(live().name)}</b> (${esc(live().cam)}) is the live area. Change the bin on the 3D page, or act here, and both stay in sync.</p></div>
+						<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+							<div class="seg" role="group" aria-label="View as">${t.map(([id, l]) =>
+								`<button data-act="role" data-id="${id}" aria-pressed="${S.role === id}">${l}</button>`).join("")}</div>
+							<span class="tw-link${full ? " full" : ""}"><i></i>3D bin: ${full ? "overflowing" : "clean"} → ${ST[live().status].label}</span>
+							<span class="tw-note"><a href="index.html">Open 3D view</a> · <a href="#" data-act="reset">Reset demo</a></span>
+						</div></div>`;
+				}
+
+				function admin(all) {
+					const counts = ["clear", "full", "scheduled", "collected"].map((k) =>
+						`<div class="tw-card tw-count"><div><i style="background:${ST[k].c}"></i>${ST[k].label}</div><b>${all.filter((a) => a.status === k).length}</b></div>`).join("");
+					const pins = all.map((a) =>
+						`<button class="tw-pin${a.isLive ? " live" : ""}" data-act="open" data-id="${a.id}" style="left:${a.x}%;top:${a.y}%"><i style="background:${a.c};box-shadow:0 0 0 3px ${a.bg}"></i>${esc(a.name)}${a.isLive ? " · 3D" : ""}</button>`).join("");
+					const rows = all.map((a) => `<div class="tw-row">
+						<div><div style="font-weight:600">${esc(a.name)}</div><div class="sm">${esc(a.sub)}</div></div>
+						<div>${pill(a)}</div>
+						<select class="tw-in" data-chg="assign" data-id="${a.id}">${opts(FAC, a.fac, (f) => f.id, (f) => f.name)}</select>
+						<div class="tw-mono">${esc(a.cam || "—")}</div></div>`).join("");
+					const cams = all.filter((a) => a.cam).map((a) => `<div class="tw-card">${snapHtml(a)}
+						<div class="tw-snapfoot"><div><div style="font-weight:600;font-size:14px">${esc(a.name)}</div><div style="font-size:12px;font-weight:600;color:${a.c}">${a.label}</div></div>
+						${a.canSim ? `<button class="tw-btn sm" data-act="sim" data-id="${a.id}">${a.isLive ? "Overflow the 3D bin" : "Simulate detection"}</button>` : ""}</div></div>`).join("");
+					const nm = (id) => S.areas.find((a) => a.id === id).name;
+					const maxF = Math.max(...Object.values(FILLS)), maxA = Math.max(...Object.values(AVG));
+					const fills = Object.entries(FILLS).map(([id, n]) =>
+						`<div class="tw-bar" style="grid-template-columns:130px 1fr 28px"><div class="nm">${esc(nm(id))}</div><div class="tr"><div style="width:${(n / maxF) * 100}%;background:var(--st-full)"></div></div><div class="v">${n}</div></div>`).join("");
+					const avgs = Object.entries(AVG).sort((a, b) => b[1] - a[1]).map(([id, v]) =>
+						`<div class="tw-bar"><div class="nm">${esc(nm(id))}</div><div class="tr"><div style="width:${(v / maxA) * 100}%;background:var(--accent)"></div></div><div class="v">${v.toFixed(1)}h</div></div>`).join("");
+					const avgAll = (Object.entries(AVG).reduce((s, [id, v]) => s + v * FILLS[id], 0) / Object.values(FILLS).reduce((a, b) => a + b, 0)).toFixed(1);
+					return `<div class="tw-counts">${counts}</div>
+					<div class="tw-grid">
+						<section class="tw-card" style="display:flex;flex-direction:column"><div class="tw-ch"><h3>Area map</h3><span class="tw-note">Click a pin to open its facilitator view</span></div>
+							<div class="tw-map" style="flex:1"><div class="road" style="left:0;right:0;top:46%;height:14px"></div><div class="road" style="top:0;bottom:0;left:52%;width:12px"></div><div class="river"></div>${pins}</div></section>
+						<section class="tw-card"><div class="tw-ch"><h3>All areas</h3><span class="tw-note">${all.length} areas · ${all.filter((a) => a.cam).length} cameras · 3 facilitators</span></div><div class="tw-scroll"><div class="tw-row th"><div>Area</div><div>Status</div><div>Facilitator</div><div>Camera</div></div>${rows}</div></section>
+					</div>
+					<div class="tw-ch" style="padding:0;border:0"><h2 style="font-size:20px">Latest camera snapshots</h2><span class="tw-note">CAM-06 is rendered from the 3D camera. Use the buttons to test the alert flow.</span></div>
+					<div class="tw-snaps">${cams}</div>
+					<h2 style="font-size:20px">Reports · last 30 days</h2>
+					<div class="tw-grid">
+						<section class="tw-card"><div class="tw-ch"><h3>Times an area was detected full</h3></div><div class="tw-bars">${fills}</div></section>
+						<section class="tw-card"><div class="tw-ch"><h3>Average time from Full to Collected</h3><span class="tw-note">All areas: <b style="color:var(--ink);font-size:16px">${avgAll} h</b></span></div><div class="tw-bars">${avgs}</div></section>
+					</div>`;
+				}
+
+				const myAreas = (all) =>
+					all.filter((a) => a.fac === S.facId).sort((a, b) => a.o - b.o || (a.fullAt || 0) - (b.fullAt || 0));
+				const pickSel = (mine) => mine.find((a) => a.id === S.selArea) || mine[0] || null;
+				const selected = () => pickSel(myAreas(S.areas.map(view)));
+
+				function fac(all) {
+					const mine = myAreas(all), sel = pickSel(mine);
+					const list = mine.map((a) => `<button class="tw-area${sel && a.id === sel.id ? " on" : ""}" data-act="select" data-id="${a.id}">
+						<span><b>${esc(a.name)}${a.isLive ? " · 3D" : ""}</b><small class="tw-note">${esc(a.line)}</small></span>${pill(a)}</button>`).join("");
+					const inbox = S.notes.filter((n) => n.to === "fac" && n.fac === S.facId).sort((a, b) => b.at - a.at).slice(0, 5)
+						.map((n) => `<div class="tw-inbox"><div><span>${esc(n.ch)}</span><span>${esc(fW(n.at))}</span></div><div>${esc(n.msg)}</div></div>`).join("");
+					let detail = "";
+					if (sel) {
+						const facts = [
+							["Time detected", sel.fullAt ? fW(sel.fullAt) : "—"],
+							["Full for", sel.isFull ? dur(sel.fullMin) : "—"],
+							["Confidence", sel.cam && sel.conf ? sel.confPct : "—"],
+							["Camera", sel.cam || "None"],
+						].map(([k, v]) => `<div><small>${k}</small><div>${esc(v)}</div></div>`).join("");
+						const w = new Date(`${S.sDate}T${S.sTime}`);
+						const sms = isNaN(w) ? "" : `Garbage collection at ${sel.name} on ${fD(w)}, ${fT(w)}.`;
+						let action = "";
+						if (sel.status === "full") action = `<div class="tw-act"><b>Schedule collection</b>
+							<div class="tw-two"><label class="tw-lbl">Date<input class="tw-in" type="date" value="${S.sDate}" data-chg="date"></label>
+							<label class="tw-lbl">Time<input class="tw-in" type="time" value="${S.sTime}" data-chg="time"></label></div>
+							<label class="tw-lbl">Truck or crew<select class="tw-in" data-chg="crew">${opts(CREWS, S.sCrew, (c) => c, (c) => c)}</select></label>
+							<div class="tw-sms"><span>SMS to ${sel.hh} households:</span> “${esc(sms)}”</div>
+							<button class="tw-btn" data-act="sched">Schedule and notify residents</button></div>`;
+						else if (sel.status === "scheduled") action = `<div class="tw-act"><b>Collection scheduled</b>
+							<div style="font-size:14px;line-height:1.5">${esc(fD(sel.sched.at))}, ${esc(fT(sel.sched.at))} · ${esc(sel.sched.crew)}. Residents were notified by SMS.</div>
+							<button class="tw-btn dark" data-act="collected">Mark as collected</button></div>`;
+						else if (sel.status === "collected") action = `<div class="tw-act" style="color:var(--st-coll)"><span><b>Marked collected.</b> ${sel.isLive ? "The 3D bin is being emptied; waiting for the camera to confirm…" : "Waiting for the camera to confirm the area is clean…"}</span></div>`;
+						else action = `<div class="tw-act" style="color:var(--st-clear)"><span><b>Clear.</b> No action needed.</span></div>`;
+						detail = `<section class="tw-card tw-detail">
+							<div class="tw-ch" style="padding:16px 18px"><div><h2 style="font-size:24px">${esc(sel.name)}</h2><div class="tw-note" style="font-size:13px">${esc(sel.sub)}</div></div><span class="tw-pill" style="font-size:13px;background:${sel.bg};color:${sel.c}">${sel.label}</span></div>
+							<div class="tw-detail-body"><div>${snapHtml(sel, true)}</div>
+							<div><div class="tw-facts">${facts}</div>${action}</div></div></section>`;
+					}
+					return `<div class="tw-head"><div><span class="lbl">Facilitator</span><h2>My areas</h2></div>
+						<label class="tw-note" style="display:flex;align-items:center;gap:8px;font-size:13px">Signed in as
+						<select class="tw-in" data-chg="fac" style="font-weight:600">${opts(FAC, S.facId, (f) => f.id, (f) => f.name)}</select></label></div>
+						<div class="tw-fac"><div class="tw-side">
+							<section class="tw-card"><div class="tw-ch"><h3>Assigned areas · Full first</h3></div>${list}</section>
+							<section class="tw-card"><div class="tw-ch"><h3>Alerts received</h3></div>${inbox || '<div class="tw-inbox"><div>No alerts yet.</div></div>'}</section>
+						</div>${detail}</div>`;
+				}
+
+				function res(all) {
+					const rv = all.find((a) => a.id === S.resArea);
+					const blurb = {
+						full: "Bins in your area are full. Your facilitator has been alerted and will schedule a pickup.",
+						scheduled: "A pickup has been scheduled. Please bring out your trash before the truck arrives.",
+						collected: "Trash was just collected. The camera is confirming the area is clean.",
+						clear: "Bins in your area have space. No action needed.",
+					}[rv.status];
+					const notes = S.notes.filter((n) => n.to === "res" && n.area === S.resArea).sort((a, b) => b.at - a.at)
+						.map((n) => `<div><div class="tw-bubble">${esc(n.msg)}</div><div class="tw-when">${esc(n.ch)} · ${esc(fW(n.at))}</div></div>`).join("");
+					const report = S.reportOpen
+						? `<section class="tw-card" style="padding:16px;display:flex;flex-direction:column;gap:12px;border-radius:14px">
+							<div style="display:flex;justify-content:space-between;align-items:center"><b>Report a problem</b><button class="tw-btn sm" data-act="closeReport" style="border:0">Cancel</button></div>
+							<div class="tw-note" style="font-size:13px;line-height:1.45">Send a photo of an overflowing bin or tambak. Your facilitator will be alerted.</div>
+							<label class="tw-drop"><input type="file" accept="image/*" data-chg="photo">${S.reportPhoto
+								? `<div class="ph" style="background-image:url('${S.reportPhoto}')"></div>`
+								: '<b>Add photo</b><span class="tw-note">Tap to take or upload</span>'}</label>
+							<textarea class="tw-in" data-chg="reportText" rows="3" placeholder="Where exactly? e.g. corner of Mabini St., beside the chapel" style="resize:vertical">${esc(S.reportText)}</textarea>
+							<button class="tw-btn" data-act="submitReport">Send report</button></section>`
+						: '<button class="tw-btn ghost" data-act="openReport" style="border-radius:10px">Report a problem</button>';
+					return `<div class="tw-res">
+						<label class="tw-note" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px">Resident of
+						<select class="tw-in" data-chg="resArea" style="font-weight:600">${opts(all, S.resArea, (a) => a.id, (a) => a.name)}</select></label>
+						<section class="tw-hero" style="background:${rv.bg}"><div style="font-size:13px;font-weight:600;color:${rv.c}">${esc(rv.name)} · right now${rv.isLive ? " · live from 3D render" : ""}</div>
+							<b style="color:${rv.c}">${rv.label}</b><div style="font-size:14px;line-height:1.45">${blurb}</div></section>
+						<section class="tw-card" style="padding:16px 18px;border-radius:14px"><span class="lbl">Next collection</span>
+							<div style="font:600 24px var(--display);margin-top:4px">${rv.sched ? esc(fD(rv.sched.at) + ", " + fT(rv.sched.at)) : "Not yet scheduled"}</div>
+							<div class="tw-note" style="font-size:13px">${rv.sched ? esc(rv.sched.crew) : "You’ll get an SMS as soon as a pickup is set."}</div></section>
+						<section class="tw-card" style="border-radius:14px"><div class="tw-ch"><h3>Notifications</h3><span class="tw-note">SMS to 0927 *** 0188</span></div>
+							<div class="tw-chat">${notes || '<div class="tw-note" style="font-size:13px">No messages yet.</div>'}</div></section>
+						${report}</div>`;
+				}
+
+				function render() {
+					save();
+					const all = S.areas.map(view);
+					const keep = root.querySelector("[data-chg=reportText]"),
+						focus = document.activeElement === keep;
+					root.innerHTML = tabs() + (S.role === "admin" ? admin(all) : S.role === "fac" ? fac(all) : res(all));
+					if (focus) {
+						const t = root.querySelector("[data-chg=reportText]");
+						if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+					}
+				}
+
+				/* ----- events ----- */
+				root.addEventListener("click", (e) => {
+					const t = e.target.closest("[data-act]");
+					if (!t) return;
+					const id = t.dataset.id, a = id && S.areas.find((x) => x.id === id);
+					switch (t.dataset.act) {
+						case "reset":
+							e.preventDefault();
+							try { localStorage.removeItem(KD); } catch (x) {}
+							binStore.setFull(true);
+							location.reload();
+							break;
+						case "role": S.role = id; render(); break;
+						case "open": S.role = "fac"; S.facId = a.fac; S.selArea = a.id; render(); break;
+						case "select": S.selArea = id; render(); break;
+						case "sim": simulate(a); break;
+						case "sched": schedule(selected()); break;
+						case "collected": collected(selected()); break;
+						case "openReport": S.reportOpen = true; render(); break;
+						case "closeReport": Object.assign(S, { reportOpen: false, reportPhoto: "", reportText: "" }); render(); break;
+						case "submitReport": submitReport(S.areas.find((x) => x.id === S.resArea)); break;
+					}
+				});
+				root.addEventListener("input", (e) => {
+					if (e.target.dataset.chg === "reportText") S.reportText = e.target.value;
+				});
+				root.addEventListener("change", (e) => {
+					const t = e.target, k = t.dataset.chg;
+					if (!k) return;
+					if (k === "assign") {
+						const a = S.areas.find((x) => x.id === t.dataset.id);
+						upd(a.id, { fac: t.value });
+						flash(`${a.name} assigned to ${facName(t.value)}.`);
+					} else if (k === "fac") { S.facId = t.value; S.selArea = null; render(); }
+					else if (k === "date") { S.sDate = t.value; render(); }
+					else if (k === "time") { S.sTime = t.value; render(); }
+					else if (k === "crew") { S.sCrew = t.value; render(); }
+					else if (k === "resArea") { S.resArea = t.value; S.reportOpen = false; render(); }
+					else if (k === "reportText") S.reportText = t.value;
+					else if (k === "photo") {
+						const f = t.files && t.files[0];
+						if (f) { S.reportPhoto = URL.createObjectURL(f); render(); }
+					}
+				});
+
+				render();
+				/* catch up with whatever the 3D page did while this page was closed */
+				applyBin(binStore.getFull());
+				S.areas.filter((a) => a.status === "collected").forEach((a) => {
+					if (a.id === LIVE) setTimeout(() => live().status === "collected" && requestBin(false), 1200);
+					else upd(a.id, { status: "clear", sched: null, fullAt: null });
+				});
+			})();
+		</script>
+	</body>
+</html>
